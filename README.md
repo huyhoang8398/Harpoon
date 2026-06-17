@@ -48,6 +48,7 @@ Add to your `Default.sublime-keymap` (`Preferences > Key Bindings`):
     { "keys": ["ctrl+alt+e"], "command": "harpoon_list" },
     { "keys": ["ctrl+alt+]"], "command": "harpoon_next" },
     { "keys": ["ctrl+alt+["], "command": "harpoon_prev" },
+    { "keys": ["ctrl+alt+d"], "command": "harpoon_clear" },
 
     { "keys": ["ctrl+1"], "command": "harpoon_goto", "args": {"index": 1} },
     { "keys": ["ctrl+2"], "command": "harpoon_goto", "args": {"index": 2} },
