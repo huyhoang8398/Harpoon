@@ -1,0 +1,22 @@
+[
+	{
+		"caption": "UndoTree: Show Undo Tree",
+		"command": "show_undo_tree"
+	},
+	{
+		"caption": "Harpoon: Add file",
+		"command": "harpoon_add"
+	},
+	{
+		"caption": "Harpoon: Show list",
+		"command": "harpoon_list"
+	},
+	{
+		"caption": "Harpoon: Next file",
+		"command": "harpoon_next"
+	},
+	{
+		"caption": "Harpoon: Previous file",
+		"command": "harpoon_prev"
+	},
+]
