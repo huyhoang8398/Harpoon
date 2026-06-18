@@ -23,4 +23,12 @@
 		"caption": "Harpoon: Previous file",
 		"command": "harpoon_prev"
 	},
+	{
+    "caption": "Preferences: Harpoon Settings",
+    "command": "edit_settings",
+    "args": {
+        "base_file": "${packages}/Harpoon/Harpoon.sublime-settings",
+        "default": "{\n\t$0\n}\n"
+    }
+}
 ]
