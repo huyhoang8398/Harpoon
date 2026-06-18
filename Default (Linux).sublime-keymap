@@ -1,12 +1,69 @@
 [
-    { "keys": ["ctrl+alt+a"], "command": "harpoon_add" },
-    { "keys": ["ctrl+alt+e"], "command": "harpoon_list" },
-    { "keys": ["ctrl+alt+]"], "command": "harpoon_next" },
-    { "keys": ["ctrl+alt+["], "command": "harpoon_prev" },
-    { "keys": ["ctrl+alt+d"], "command": "harpoon_clear" },
-
-    { "keys": ["ctrl+1"], "command": "harpoon_goto", "args": {"index": 1} },
-    { "keys": ["ctrl+2"], "command": "harpoon_goto", "args": {"index": 2} },
-    { "keys": ["ctrl+3"], "command": "harpoon_goto", "args": {"index": 3} },
-    { "keys": ["ctrl+4"], "command": "harpoon_goto", "args": {"index": 4} }
+    {
+        "keys": ["ctrl+alt+a"],
+        "command": "harpoon_add",
+        "context": [
+            { "key": "setting.is_widget", "operator": "equal", "operand": false }
+        ]
+    },
+    {
+        "keys": ["ctrl+alt+e"],
+        "command": "harpoon_list",
+        "context": [
+            { "key": "setting.is_widget", "operator": "equal", "operand": false }
+        ]
+    },
+    {
+        "keys": ["ctrl+alt+]"],
+        "command": "harpoon_next",
+        "context": [
+            { "key": "setting.is_widget", "operator": "equal", "operand": false }
+        ]
+    },
+    {
+        "keys": ["ctrl+alt+["],
+        "command": "harpoon_prev",
+        "context": [
+            { "key": "setting.is_widget", "operator": "equal", "operand": false }
+        ]
+    },
+    {
+        "keys": ["ctrl+alt+d"],
+        "command": "harpoon_clear",
+        "context": [
+            { "key": "setting.is_widget", "operator": "equal", "operand": false }
+        ]
+    },
+    {
+        "keys": ["ctrl+1"],
+        "command": "harpoon_goto",
+        "args": {"index": 1},
+        "context": [
+            { "key": "setting.is_widget", "operator": "equal", "operand": false }
+        ]
+    },
+    {
+        "keys": ["ctrl+2"],
+        "command": "harpoon_goto",
+        "args": {"index": 2},
+        "context": [
+            { "key": "setting.is_widget", "operator": "equal", "operand": false }
+        ]
+    },
+    {
+        "keys": ["ctrl+3"],
+        "command": "harpoon_goto",
+        "args": {"index": 3},
+        "context": [
+            { "key": "setting.is_widget", "operator": "equal", "operand": false }
+        ]
+    },
+    {
+        "keys": ["ctrl+4"],
+        "command": "harpoon_goto",
+        "args": {"index": 4},
+        "context": [
+            { "key": "setting.is_widget", "operator": "equal", "operand": false }
+        ]
+    }
 ]
