@@ -13,21 +13,15 @@
                         "caption": "Harpoon",
                         "children": [
                             {
-                                "caption": "Settings",
                                 "command": "edit_settings",
-                                "args": {
-                                    "base_file": "${packages}/Harpoon/Harpoon.sublime-settings",
-                                    "default": "{\n\t$0\n}\n"
-                                }
-                            },
-                            {
-                                "caption": "Key Bindings",
-                                "command": "edit_settings",
-                                "args": {
-                                    "base_file": "${packages}/Harpoon/Default.sublime-keymap",
-                                    "default": "[\n\t$0\n]\n",
-                                    "user_file": "${packages}/User/Default (${platform}).sublime-keymap"
-                                }
+                                "args":
+                                {
+                                    "base_file": "${packages}/Harpoon/Example.sublime-keymap",
+                                    "user_file": "${packages}/User/Default (${platform}).sublime-keymap",
+                                    "default":
+                                    "[\n    $0\n]\n"
+                                },
+                                "caption": "Key Bindings"
                             }
                         ]
                     }

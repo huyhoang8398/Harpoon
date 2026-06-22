@@ -23,12 +23,14 @@
 		"caption": "Harpoon: Previous file",
 		"command": "harpoon_prev"
 	},
-	{
-    "caption": "Preferences: Harpoon Settings",
-    "command": "edit_settings",
-    "args": {
-        "base_file": "${packages}/Harpoon/Harpoon.sublime-settings",
-        "default": "{\n\t$0\n}\n"
+    {
+        "caption": "Preferences: Harpoon Key Bindings",
+        "command": "edit_settings",
+        "args":
+        {
+            "base_file": "${packages}/Harpoon/Example.sublime-keymap",
+            "user_file": "${packages}/User/Default (${platform}).sublime-keymap",
+            "default": "[\n    $0\n]\n"
+        }
     }
-}
 ]
