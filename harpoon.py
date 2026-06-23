@@ -1,21 +1,19 @@
+import os
 import sublime
 import sublime_plugin
-import os
 
 BOOKMARK_KEY = "harpoon_marks"
 
 
 def get_marks(window):
-    """Read the mark list from the window's project_data.
+    """Read the mark list from the window's settings.
 
     Returns a list of dicts: {"path": str, "row": int, "col": int}
-    or None if no project is open.
     """
-    data = window.project_data()
-    if data is None:
-        return None  # no project open
-
-    marks = data.get(BOOKMARK_KEY, [])
+    settings = window.settings()
+    marks = settings.get(BOOKMARK_KEY)
+    if not isinstance(marks, list):
+        marks = []
 
     # Backward-compat: upgrade old "list of path strings" format.
     upgraded = []
@@ -34,24 +32,8 @@ def get_marks(window):
 
 
 def save_marks(window, marks):
-    data = window.project_data()
-    if data is None:
-        # No .sublime-project file loaded; create a minimal in-memory
-        # project so data has somewhere to live for this window session.
-        data = {}
-    data[BOOKMARK_KEY] = marks
-    window.set_project_data(data)
-
-
-def require_project(window):
-    if window.project_file_name() is None:
-        sublime.error_message(
-            "Harpoon: this window has no .sublime-project file.\n\n"
-            "Use Project > Save Project As... first.\n\n"
-            "Or Install AutoProject plugin."
-        )
-        return False
-    return True
+    """Persist marks into the window's session settings without touching disk."""
+    window.settings().set(BOOKMARK_KEY, marks)
 
 
 def mark_paths(marks):
@@ -105,13 +87,11 @@ class HarpoonTracker(sublime_plugin.EventListener):
         if window is None:
             return
 
-        data = window.project_data()
-        if data is None:
+        settings = window.settings()
+        marks = settings.get(BOOKMARK_KEY)
+        if not isinstance(marks, list):
             return
 
-        marks = data.get(BOOKMARK_KEY, [])
-        # Skip the legacy-format upgrade dance here; if marks are still in
-        # old string format they simply won't match and nothing updates.
         changed = False
         for m in marks:
             if isinstance(m, dict) and m.get("path") == file_name:
@@ -123,8 +103,7 @@ class HarpoonTracker(sublime_plugin.EventListener):
                 break
 
         if changed:
-            data[BOOKMARK_KEY] = marks
-            window.set_project_data(data)
+            settings.set(BOOKMARK_KEY, marks)
 
     def on_deactivated(self, view):
         self._update_position(view)
@@ -134,12 +113,9 @@ class HarpoonTracker(sublime_plugin.EventListener):
 
 
 class HarpoonAddCommand(sublime_plugin.WindowCommand):
-    """Add or remove the current file from this project's Harpoon list."""
+    """Add or remove the current file from this window's Harpoon list."""
 
     def run(self):
-        if not require_project(self.window):
-            return
-
         view = self.window.active_view()
         if not view:
             return
@@ -149,28 +125,29 @@ class HarpoonAddCommand(sublime_plugin.WindowCommand):
             sublime.status_message("Harpoon: save the file first")
             return
 
-        marks = get_marks(self.window) or []
+        marks = get_marks(self.window)
         existing = find_mark(marks, file_name)
 
         if existing is not None:
             marks.remove(existing)
-            sublime.status_message("Harpoon: unmarked %s" % os.path.basename(file_name))
+            sublime.status_message(
+                "Harpoon: unmarked %s" % os.path.basename(file_name)
+            )
         else:
             row, col = cursor_position(view)
             marks.append({"path": file_name, "row": row, "col": col})
-            sublime.status_message("Harpoon: marked %s" % os.path.basename(file_name))
+            sublime.status_message(
+                "Harpoon: marked %s" % os.path.basename(file_name)
+            )
 
         save_marks(self.window, marks)
 
 
 class HarpoonListCommand(sublime_plugin.WindowCommand):
-    """Show quick panel of this project's harpooned files."""
+    """Show quick panel of this window's harpooned files."""
 
     def run(self):
-        if not require_project(self.window):
-            return
-
-        marks = get_marks(self.window) or []
+        marks = get_marks(self.window)
 
         valid = [m for m in marks if os.path.isfile(m["path"])]
         if valid != marks:
@@ -178,7 +155,7 @@ class HarpoonListCommand(sublime_plugin.WindowCommand):
         marks = valid
 
         if not marks:
-            sublime.status_message("Harpoon: no marks in this project")
+            sublime.status_message("Harpoon: no marks in this window")
             return
 
         items = [[os.path.basename(m["path"]), m["path"]] for m in marks]
@@ -197,13 +174,10 @@ class HarpoonListCommand(sublime_plugin.WindowCommand):
 
 
 class HarpoonGotoCommand(sublime_plugin.WindowCommand):
-    """Jump directly to mark N (1-indexed) in this project's list."""
+    """Jump directly to mark N (1-indexed) in this window's list."""
 
     def run(self, index):
-        if not require_project(self.window):
-            return
-
-        marks = get_marks(self.window) or []
+        marks = get_marks(self.window)
         marks = [m for m in marks if os.path.isfile(m["path"])]
 
         if index < 1 or index > len(marks):
@@ -214,19 +188,16 @@ class HarpoonGotoCommand(sublime_plugin.WindowCommand):
 
 
 class HarpoonNextCommand(sublime_plugin.WindowCommand):
-    """Cycle to the next harpooned file in this project."""
+    """Cycle to the next harpooned file in this window."""
 
     def run(self):
         self._cycle(1)
 
     def _cycle(self, direction):
-        if not require_project(self.window):
-            return
-
-        marks = get_marks(self.window) or []
+        marks = get_marks(self.window)
         marks = [m for m in marks if os.path.isfile(m["path"])]
         if not marks:
-            sublime.status_message("Harpoon: no marks in this project")
+            sublime.status_message("Harpoon: no marks in this window")
             return
 
         view = self.window.active_view()
@@ -242,17 +213,15 @@ class HarpoonNextCommand(sublime_plugin.WindowCommand):
 
 
 class HarpoonPrevCommand(HarpoonNextCommand):
-    """Cycle to the previous harpooned file in this project."""
+    """Cycle to the previous harpooned file in this window."""
 
     def run(self):
         self._cycle(-1)
 
 
 class HarpoonClearCommand(sublime_plugin.WindowCommand):
-    """Clear all harpooned files for this project."""
+    """Clear all harpooned files for this window."""
 
     def run(self):
-        if not require_project(self.window):
-            return
         save_marks(self.window, [])
-        sublime.status_message("Harpoon: cleared marks for this project")
+        sublime.status_message("Harpoon: cleared marks for this window")
