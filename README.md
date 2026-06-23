@@ -2,7 +2,7 @@
 
 A Sublime Text plugin for marking files and jumping back to them instantly.
 
-Marks are scoped **per project**, stored inside your `.sublime-project` file, so each project keeps its own independent list.
+Marks are scoped **per project** / **per session**
 
 ![preview](./preview.png)
 
@@ -12,8 +12,9 @@ Marks are scoped **per project**, stored inside your `.sublime-project` file, so
 - Jump to any mark directly by slot number (1, 2, 3, 4...)
 - Browse all marks in a quick panel
 - Cycle forward/backward through marks
-- Marks persist across restarts (saved in the `.sublime-project` file)
+- Marks persist across restarts (using `window.settings())
 - Dead marks (deleted or moved files) are pruned automatically
+- Modify list order
 
 ## Installation
 
@@ -38,6 +39,7 @@ Marks are scoped **per project**, stored inside your `.sublime-project` file, so
 | `harpoon_next`      | Cycle to the next mark                             |
 | `harpoon_prev`      | Cycle to the previous mark                         |
 | `harpoon_clear`     | Clear all marks for the current project            |
+| `harpoon_reorder`   | Reorder the Harpoon list                         |
 
 ## Suggested key bindings
 
@@ -50,6 +52,7 @@ Add to your `Default.sublime-keymap` (`Preferences > Key Bindings`):
     { "keys": ["ctrl+alt+]"], "command": "harpoon_next" },
     { "keys": ["ctrl+alt+["], "command": "harpoon_prev" },
     { "keys": ["ctrl+alt+d"], "command": "harpoon_clear" },
+    { "keys": ["ctrl+alt+r"], "command": "harpoon_reorder" },
 
     { "keys": ["ctrl+1"], "command": "harpoon_goto", "args": {"index": 1} },
     { "keys": ["ctrl+2"], "command": "harpoon_goto", "args": {"index": 2} },

@@ -19,6 +19,10 @@
         "keys": ["ctrl+alt+d"],
         "command": "harpoon_clear",
     },
+    { 
+        "keys": ["ctrl+alt+r"],
+        "command": "harpoon_reorder"
+    },
     {
         "keys": ["ctrl+1"],
         "command": "harpoon_goto",
