@@ -22,10 +22,11 @@ Marks are scoped **per project**, stored inside your `.sublime-project` file, so
 3. Copy `Harpoon.py` into that folder.
 4. Add the key bindings below via `Preferences > Key Bindings`.
 
-## Requirements
+## Recommend
 
-Your window must have a saved `.sublime-project` file (`Project > Save Project As...`). Harpoon stores marks inside the project file itself, so without one there's nowhere durable to save them — commands will show an error pointing this out.
-Easiest way is to install [AutoProject Plugin](https://packages.sublimetext.io/packages/AutoProjects) that will automatically create `.sublime-project`
+~~Your window should have a saved `.sublime-project` file (`Project > Save Project As...`). Harpoon stores marks inside the project file itself, so without one there's nowhere durable to save them — commands will show an error pointing this out. Easiest way is to install [AutoProject Plugin](https://packages.sublimetext.io/packages/AutoProjects) that will automatically create `.sublime-project`~~
+
+**Update (v1.0.3):** Harpoon now utilizes `window.settings()` to manage your marks. This means data is quietly handled by Sublime's internal session manager and persisted inside your workspace or global session cache. **A `.sublime-project` file is no longer required**-Harpoon works completely out of the box in any ad-hoc window or folder without any setup or sidebar flashing!
 
 ## Commands
 
@@ -66,15 +67,15 @@ Adjust freely — these are just suggestions, not hardcoded defaults. `harpoon_g
 3. Switch to another file, mark it too. Repeat as needed.
 4. Use `ctrl+1`–`ctrl+4` (or your bound keys) to jump straight to a marked file by slot, `harpoon_next`/`harpoon_prev` to cycle through the list in order, or `harpoon_list` to see all marks in a quick panel and pick one.
 
-## How it works
+### How it works
 
-Marks are stored under a `harpoon_marks` key inside your project's data, accessed via Sublime's `project_data()` / `set_project_data()` API. Because that data lives in the `.sublime-project` file, it's automatically saved to disk and reloaded the next time you open the project, no separate settings file or database involved.
+Marks are stored under a `"harpoon_marks"` key inside your window's settings, accessed via Sublime's `window.settings()` API. Because this data is handled directly by Sublime's internal session manager, it is automatically persisted behind the scenes to your `.sublime-workspace` file (if using a saved project) or the global auto-save session cache. This completely avoids manual disk writes to a `.sublime-project` file, keeping your sidebar quiet and your workflow lag-free.
 
 This also means:
 
-- Different projects never share marks.
-- Multiple windows with different projects open keep independent lists.
-- If you close a window without ever saving a `.sublime-project` file for it, marks made during that session won't persist (see Requirements above).
+* **Isolated Environments:** Marks are strictly bound to the individual window session, ensuring different projects or folders never mix up or share lists.
+* **Independent Windows:** Multiple windows running side-by-side maintain completely isolated sets of marks.
+* **Zero Setup Required (v1.0.3+):** You no longer need to save a `.sublime-project` file. Marks persist automatically across application restarts for ad-hoc folders and random windows, living safely within Sublime's workspace history.
 
 ## Notes
 
