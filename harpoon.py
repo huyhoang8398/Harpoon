@@ -32,7 +32,7 @@ def get_marks(window):
 
 
 def save_marks(window, marks):
-    """Persist marks into the window's session settings without touching disk."""
+    """Persist marks into the window's session settings."""
     window.settings().set(BOOKMARK_KEY, marks)
 
 
@@ -130,15 +130,11 @@ class HarpoonAddCommand(sublime_plugin.WindowCommand):
 
         if existing is not None:
             marks.remove(existing)
-            sublime.status_message(
-                "Harpoon: unmarked %s" % os.path.basename(file_name)
-            )
+            sublime.status_message("Harpoon: unmarked %s" % os.path.basename(file_name))
         else:
             row, col = cursor_position(view)
             marks.append({"path": file_name, "row": row, "col": col})
-            sublime.status_message(
-                "Harpoon: marked %s" % os.path.basename(file_name)
-            )
+            sublime.status_message("Harpoon: marked %s" % os.path.basename(file_name))
 
         save_marks(self.window, marks)
 
@@ -171,6 +167,86 @@ class HarpoonListCommand(sublime_plugin.WindowCommand):
         if index == -1:
             return
         goto_mark(self.window, self._marks[index])
+
+
+class HarpoonSearchCommand(sublime_plugin.WindowCommand):
+    """Search for text patterns exclusively inside your harpooned files.
+
+    Outputs to a persistent buffer using your custom layout regex configurations.
+    """
+
+    def run(self):
+        marks = get_marks(self.window)
+        valid_marks = [m for m in marks if os.path.isfile(m["path"])]
+
+        if not valid_marks:
+            sublime.status_message("Harpoon: No files marked to search within")
+            return
+
+        self._valid_marks = valid_marks
+        self.window.show_input_panel(
+            "Search Harpoon Files:", "", self.on_done, None, None
+        )
+
+    def on_done(self, text):
+        if not text:
+            return
+
+        occurrences = {}
+        match_count = 0
+
+        # Scan marked files
+        for m in self._valid_marks:
+            path = m["path"]
+            try:
+                with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                    for i, line in enumerate(f):
+                        if text.lower() in line.lower():
+                            if path not in occurrences:
+                                occurrences[path] = []
+                            occurrences[path].append((i + 1, line.rstrip()))
+                            match_count += 1
+            except Exception as e:
+                print(f"Harpoon: Could not read {path}: {e}")
+
+        if match_count == 0:
+            sublime.status_message(f"Harpoon: No matches found for '{text}'")
+            return
+
+        # Create a dedicated results buffer
+        view = self.window.new_file()
+        view.set_name(f"Harpoon Search: {text}")
+        view.set_scratch(True)  # Don't prompt to save on close
+
+        # Apply your exact requested regex rules and syntax targets
+        try:
+            view.assign_syntax("Packages/Default/Find Results.hidden-tmLanguage")
+        except Exception:
+            try:
+                view.assign_syntax("Packages/Default/Find Results.sublime-syntax")
+            except Exception:
+                try:
+                    view.set_syntax_file(
+                        "Packages/Default/Find Results.hidden-tmLanguage"
+                    )
+                except Exception:
+                    pass
+
+        view.settings().set("result_file_regex", r"^([^ \t].*):$")
+        view.settings().set("result_line_regex", r"^ +([0-9]+):")
+
+        # Build the output text matching the regex spacing requirements
+        output = [f"Harpoon Search Results for '{text}' — {match_count} matches\n"]
+        for path, lines in occurrences.items():
+            # File lines must start flush against the margin (no spaces/tabs)
+            output.append(f"\n{path}:")
+            for line_num, line_text in lines:
+                # Match lines must be prefixed with spaces to satisfy the regex
+                output.append(f"  {line_num}: {line_text}")
+
+        # Populate the view safely
+        view.run_command("append", {"characters": "\n".join(output) + "\n"})
+        self.window.focus_view(view)
 
 
 class HarpoonGotoCommand(sublime_plugin.WindowCommand):
