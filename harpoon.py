@@ -130,15 +130,11 @@ class HarpoonAddCommand(sublime_plugin.WindowCommand):
 
         if existing is not None:
             marks.remove(existing)
-            sublime.status_message(
-                "Harpoon: unmarked %s" % os.path.basename(file_name)
-            )
+            sublime.status_message("Harpoon: unmarked %s" % os.path.basename(file_name))
         else:
             row, col = cursor_position(view)
             marks.append({"path": file_name, "row": row, "col": col})
-            sublime.status_message(
-                "Harpoon: marked %s" % os.path.basename(file_name)
-            )
+            sublime.status_message("Harpoon: marked %s" % os.path.basename(file_name))
 
         save_marks(self.window, marks)
 
@@ -225,3 +221,87 @@ class HarpoonClearCommand(sublime_plugin.WindowCommand):
     def run(self):
         save_marks(self.window, [])
         sublime.status_message("Harpoon: cleared marks for this window")
+
+
+class HarpoonReorderCommand(sublime_plugin.WindowCommand):
+    """Reorder harpooned files via a two-phase quick panel
+    - pick a file to move
+    - nudge it up/down until satisfied, then confirm
+    """
+
+    def run(self):
+        self._marks = [m for m in get_marks(self.window) if os.path.isfile(m["path"])]
+        if len(self._marks) < 2:
+            sublime.status_message("Harpoon: need at least 2 marks to reorder")
+            return
+        self._pick_phase()
+
+    # choose which file to move
+    def _pick_phase(self):
+        items = self._build_items(selected_idx=None)
+        self.window.show_quick_panel(
+            items,
+            self._on_pick,
+            sublime.MONOSPACE_FONT,
+        )
+
+    def _on_pick(self, index):
+        if index == -1:
+            return
+        self._selected = index
+        self._nudge_phase()
+
+    # nudge the selected file up / down
+
+    def _nudge_phase(self):
+        sel = self._selected
+        items = [
+            ["↑  Move Up", ""],
+            ["↓  Move Down", ""],
+            ["✓  Done", ""],
+        ] + self._build_items(selected_idx=sel)
+
+        # Pre-highlight the selected file in the list (offset by 3 action rows)
+        self.window.show_quick_panel(
+            items,
+            self._on_nudge,
+            sublime.MONOSPACE_FONT,
+            selected_index=3 + sel,
+        )
+
+    def _on_nudge(self, index):
+        if index == -1 or index == 2:  # cancelled or Done
+            save_marks(self.window, self._marks)
+            return
+
+        if index == 0:  # Move Up
+            self._swap(self._selected, self._selected - 1)
+        elif index == 1:  # Move Down
+            self._swap(self._selected, self._selected + 1)
+        else:
+            # User clicked a file row — re-select and stay in nudge phase
+            self._selected = index - 3
+            self._nudge_phase()
+            return
+
+        self._nudge_phase()  # reopen to show updated order
+
+    # Helpers
+    def _swap(self, a, b):
+        marks = self._marks
+        n = len(marks)
+        if 0 <= b < n:
+            marks[a], marks[b] = marks[b], marks[a]
+            self._selected = b
+
+    def _build_items(self, selected_idx):
+        items = []
+        for i, m in enumerate(self._marks):
+            prefix = "▶ " if i == selected_idx else "   "
+            items.append(
+                [
+                    "%s%s" % (prefix, os.path.basename(m["path"])),
+                    m["path"],
+                ]
+            )
+        return items

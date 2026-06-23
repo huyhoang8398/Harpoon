@@ -11,7 +11,10 @@
 		"caption": "Harpoon: Show list",
 		"command": "harpoon_list"
 	},
-	{
+    {
+        "caption": "Harpoon: Reorder List",
+        "command": "harpoon_reorder"
+    },	{
 		"caption": "Harpoon: Clear list",
 		"command": "harpoon_clear"
 	},
