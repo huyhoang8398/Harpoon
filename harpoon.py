@@ -46,19 +46,18 @@ def save_marks(window, marks):
 
 
 def _sync_editor_tmp(window, marks):
-    """If the editor view is open, keep its temp file in sync."""
+    """Sync the editor view buffer directly, but only when it is not the
+    active view, if the user is editing it we leave it alone"""
     editor = find_editor_view(window)
     if editor is None:
         return
-    tmp = editor.settings().get("harpoon_editor_tmp")
-    if not tmp:
+    if editor == window.active_view():
         return
     content = "\n".join(m["path"] for m in marks)
-    try:
-        with open(tmp, "w", encoding="utf-8") as fh:
-            fh.write(content)
-    except OSError:
-        pass
+    current = editor.substr(sublime.Region(0, editor.size()))
+    if content == current:
+        return
+    editor.run_command("harpoon_editor_replace", {"content": content})
 
 
 def mark_paths(marks):
@@ -113,6 +112,12 @@ def parse_marks(view, old_marks):
         seen.add(p)
         new_marks.append(old_index.get(p, {"path": p, "row": 0, "col": 0}))
     return new_marks
+
+
+class HarpoonEditorReplaceCommand(sublime_plugin.TextCommand):
+    """Replace the entire editor buffer content without affecting undo history."""
+    def run(self, edit, content):
+        self.view.replace(edit, sublime.Region(0, self.view.size()), content)
 
 
 class HarpoonTracker(sublime_plugin.EventListener):
