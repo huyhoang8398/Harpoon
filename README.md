@@ -2,42 +2,38 @@
 
 A Sublime Text plugin for marking files and jumping back to them instantly.
 
-Marks are scoped **per project**, stored inside your `.sublime-project` file, so each project keeps its own independent list.
+Marks are scoped **per window**, stored via `window.settings()` and persisted by Sublime's session manager — no `.sublime-project` file required.
 
 ![preview](./preview.png)
 
 ## Features
 
-- Mark/unmark the current file with one hotkey
-- Jump to any mark directly by slot number (1, 2, 3, 4...)
-- Browse all marks in a quick panel
-- Cycle forward/backward through marks
-- Marks persist across restarts (saved in the `.sublime-project` file)
-- Dead marks (deleted or moved files) are pruned automatically
+- Auto-assign a file to the first free slot with one hotkey (`harpoon_add`)
+- Pin a file to a **specific slot** with `harpoon_add_to_slot` (toggle + swap)
+- Jump to any slot directly by number (`harpoon_goto`)
+- Browse all slots in a quick panel, including empty ones (`harpoon_list`)
+- Cycle forward/backward through marked files (`harpoon_next` / `harpoon_prev`)
+- Dead marks (deleted or moved files) are replaced with empty slots automatically
+- Marks persist across restarts; each window keeps its own independent list
 
 ## Installation
 
 1. Open `Preferences > Browse Packages...` in Sublime Text.
 2. Create a new folder called `Harpoon`.
-3. Copy `Harpoon.py` into that folder.
+3. Copy `harpoon.py` and `marks.py` into that folder.
 4. Add the key bindings below via `Preferences > Key Bindings`.
-
-## Recommend
-
-~~Your window should have a saved `.sublime-project` file (`Project > Save Project As...`). Harpoon stores marks inside the project file itself, so without one there's nowhere durable to save them — commands will show an error pointing this out. Easiest way is to install [AutoProject Plugin](https://packages.sublimetext.io/packages/AutoProjects) that will automatically create `.sublime-project`~~
-
-**Update (v1.0.3):** Harpoon now utilizes `window.settings()` to manage your marks. This means data is quietly handled by Sublime's internal session manager and persisted inside your workspace or global session cache. **A `.sublime-project` file is no longer required**-Harpoon works completely out of the box in any ad-hoc window or folder without any setup or sidebar flashing!
 
 ## Commands
 
-| Command            | Description                                      |
-|---------------------|---------------------------------------------------|
-| `harpoon_add`       | Mark the current file, or unmark it if already marked |
-| `harpoon_list`      | Show a quick panel of all marks; select to open   |
-| `harpoon_goto`      | Jump to a specific mark by slot (`index` arg, 1-indexed) |
-| `harpoon_next`      | Cycle to the next mark                             |
-| `harpoon_prev`      | Cycle to the previous mark                         |
-| `harpoon_clear`     | Clear all marks for the current project            |
+| Command               | Description |
+|-----------------------|-------------|
+| `harpoon_add`         | Auto-assign current file to the first free slot; toggle unmark if already marked |
+| `harpoon_add_to_slot` | Assign current file to a specific slot (`index` arg, 1-based). Toggle if same file, swap if different file |
+| `harpoon_list`        | Show a quick panel of all slots (empty slots visible but not navigable) |
+| `harpoon_goto`        | Jump to a specific slot (`index` arg, 1-based) |
+| `harpoon_next`        | Cycle to the next marked file |
+| `harpoon_prev`        | Cycle to the previous marked file |
+| `harpoon_clear`       | Clear all marks for the current window |
 
 ## Suggested key bindings
 
@@ -51,33 +47,46 @@ Add to your `Default.sublime-keymap` (`Preferences > Key Bindings`):
     { "keys": ["ctrl+alt+["], "command": "harpoon_prev" },
     { "keys": ["ctrl+alt+d"], "command": "harpoon_clear" },
 
+    { "keys": ["ctrl+alt+1"], "command": "harpoon_add_to_slot", "args": {"index": 1} },
+    { "keys": ["ctrl+alt+2"], "command": "harpoon_add_to_slot", "args": {"index": 2} },
+    { "keys": ["ctrl+alt+3"], "command": "harpoon_add_to_slot", "args": {"index": 3} },
+    { "keys": ["ctrl+alt+4"], "command": "harpoon_add_to_slot", "args": {"index": 4} },
+    { "keys": ["ctrl+alt+5"], "command": "harpoon_add_to_slot", "args": {"index": 5} },
+
     { "keys": ["ctrl+1"], "command": "harpoon_goto", "args": {"index": 1} },
     { "keys": ["ctrl+2"], "command": "harpoon_goto", "args": {"index": 2} },
     { "keys": ["ctrl+3"], "command": "harpoon_goto", "args": {"index": 3} },
-    { "keys": ["ctrl+4"], "command": "harpoon_goto", "args": {"index": 4} }
+    { "keys": ["ctrl+4"], "command": "harpoon_goto", "args": {"index": 4} },
+    { "keys": ["ctrl+5"], "command": "harpoon_goto", "args": {"index": 5} }
 ]
 ```
 
-Adjust freely — these are just suggestions, not hardcoded defaults. `harpoon_goto` accepts any `index`, so you aren't limited to four slots; add more bindings for `index: 5`, `6`, etc. if you want.
+`harpoon_goto` and `harpoon_add_to_slot` accept any `index` — add more bindings for slots 6, 7, etc. if needed.
 
 ## Usage
 
 1. Open a file you want to keep close at hand.
-2. Press your `harpoon_add` key (e.g. `ctrl+alt+a`) to mark it. Press it again on the same file to unmark it.
-3. Switch to another file, mark it too. Repeat as needed.
-4. Use `ctrl+1`–`ctrl+4` (or your bound keys) to jump straight to a marked file by slot, `harpoon_next`/`harpoon_prev` to cycle through the list in order, or `harpoon_list` to see all marks in a quick panel and pick one.
+2. Press `ctrl+alt+a` to mark it (auto-assign). Press it again to unmark.
+   — *or* — Press `ctrl+alt+1` to pin it to slot 1 specifically.
+3. Mark more files. Use `ctrl+1`–`ctrl+5` to jump straight to a slot, `ctrl+alt+]` / `ctrl+alt+[` to cycle, or `ctrl+alt+e` to browse all slots in a quick panel.
 
-### How it works
+### Slot assignment rules (`harpoon_add_to_slot`)
 
-Marks are stored under a `"harpoon_marks"` key inside your window's settings, accessed via Sublime's `window.settings()` API. Because this data is handled directly by Sublime's internal session manager, it is automatically persisted behind the scenes to your `.sublime-workspace` file (if using a saved project) or the global auto-save session cache. This completely avoids manual disk writes to a `.sublime-project` file, keeping your sidebar quiet and your workflow lag-free.
+| Situation | Result |
+|---|---|
+| Slot is empty | File is assigned to that slot |
+| Slot holds the **same** file | Slot is cleared (toggle) |
+| Slot holds a **different** file | Old file is silently replaced (swap) |
 
-This also means:
+### How marks are stored
 
-* **Isolated Environments:** Marks are strictly bound to the individual window session, ensuring different projects or folders never mix up or share lists.
-* **Independent Windows:** Multiple windows running side-by-side maintain completely isolated sets of marks.
-* **Zero Setup Required (v1.0.3+):** You no longer need to save a `.sublime-project` file. Marks persist automatically across application restarts for ad-hoc folders and random windows, living safely within Sublime's workspace history.
+Marks live under a `"harpoon_marks"` key in `window.settings()`. Sublime's session manager persists this automatically to your `.sublime-workspace` file (or global session cache for ad-hoc windows). No disk writes, no sidebar noise, no `.sublime-project` required.
+
+Marks are stored as a **sparse list**: each index maps to a slot number (`marks[0]` = slot 1, `marks[1]` = slot 2, …). An empty slot is stored as `null` in JSON. This preserves slot numbers when a file is unmarked — other files stay in their slots.
+
+Multiple windows running side-by-side maintain completely independent mark lists.
 
 ## Notes
 
-- Marks are stored as absolute file paths. Moving or renaming a project on disk won't break existing marks as long as the paths themselves remain valid; if a file is deleted or moved, its mark is silently dropped the next time you open the list or cycle through marks.
-- `harpoon_add` requires the file to be saved (have a path on disk); it won't mark unsaved buffers.
+- Marks require the file to be saved (have a path on disk); unsaved buffers cannot be marked.
+- Marks are stored as absolute file paths. If a file is deleted or moved, its slot becomes empty automatically the next time you navigate or open the list.
