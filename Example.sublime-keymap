@@ -1,4 +1,35 @@
 [
+    // --- Slot assignment (ctrl+alt+N) ---
+    // Assigns the current file to slot N.
+    // Same shortcut on the same file → unmarks it (toggle).
+    // Same shortcut on a different file → replaces the slot occupant (swap).
+    {
+        "keys": ["ctrl+alt+1"],
+        "command": "harpoon_add_to_slot",
+        "args": {"index": 1},
+    },
+    {
+        "keys": ["ctrl+alt+2"],
+        "command": "harpoon_add_to_slot",
+        "args": {"index": 2},
+    },
+    {
+        "keys": ["ctrl+alt+3"],
+        "command": "harpoon_add_to_slot",
+        "args": {"index": 3},
+    },
+    {
+        "keys": ["ctrl+alt+4"],
+        "command": "harpoon_add_to_slot",
+        "args": {"index": 4},
+    },
+    {
+        "keys": ["ctrl+alt+5"],
+        "command": "harpoon_add_to_slot",
+        "args": {"index": 5},
+    },
+
+    // --- Auto-assign (finds first free slot) ---
     {
         "keys": ["ctrl+alt+a"],
         "command": "harpoon_add",

@@ -1,50 +1,48 @@
+"""
+harpoon.py — Sublime Text commands for the Harpoon plugin.
+
+Thin ST wrapper around the pure list logic in marks.py.
+All functions that depend on the Sublime API (window, view, sublime)
+live here; everything else lives in marks.py and is unit-tested there.
+
+Storage key: window.settings()["harpoon_marks"]
+Mark format : {"path": str, "row": int, "col": int}
+"""
 import os
 import sublime
 import sublime_plugin
+
+try:
+    # Relative import when loaded by Sublime Text (module name: Harpoon.harpoon).
+    from .marks import find_mark, mark_paths, upgrade_marks, get_mark_at, set_mark_at, find_mark_slot, find_free_slot
+except ImportError:
+    # Absolute import fallback for the pytest environment.
+    from marks import find_mark, mark_paths, upgrade_marks, get_mark_at, set_mark_at, find_mark_slot, find_free_slot
 
 BOOKMARK_KEY = "harpoon_marks"
 
 
 def get_marks(window):
-    """Read the mark list from the window's settings.
+    """Read and return the mark list from the window's session settings.
 
-    Returns a list of dicts: {"path": str, "row": int, "col": int}
+    Automatically upgrades the legacy format (list of path strings) to
+    the current format (list of dicts). Returns a list of dicts.
     """
     settings = window.settings()
     marks = settings.get(BOOKMARK_KEY)
     if not isinstance(marks, list):
         marks = []
 
-    # Backward-compat: upgrade old "list of path strings" format.
-    upgraded = []
-    changed = False
-    for m in marks:
-        if isinstance(m, str):
-            upgraded.append({"path": m, "row": 0, "col": 0})
-            changed = True
-        else:
-            upgraded.append(m)
-
+    marks, changed = upgrade_marks(marks)
     if changed:
-        save_marks(window, upgraded)
+        save_marks(window, marks)
 
-    return upgraded
+    return marks
 
 
 def save_marks(window, marks):
     """Persist marks into the window's session settings without touching disk."""
     window.settings().set(BOOKMARK_KEY, marks)
-
-
-def mark_paths(marks):
-    return [m["path"] for m in marks]
-
-
-def find_mark(marks, file_name):
-    for m in marks:
-        if m["path"] == file_name:
-            return m
-    return None
 
 
 def cursor_position(view):
@@ -112,6 +110,43 @@ class HarpoonTracker(sublime_plugin.EventListener):
         self._update_position(view)
 
 
+class HarpoonAddToSlotCommand(sublime_plugin.WindowCommand):
+    """Assign the current file to a specific slot (1-based index).
+
+    Toggle  — pressing the same shortcut on a file already in that slot
+              clears the slot.
+    Swap    — if the slot is occupied by a different file, that file is
+              silently replaced.
+    """
+
+    def run(self, index):
+        view = self.window.active_view()
+        if not view:
+            return
+
+        file_name = view.file_name()
+        if not file_name:
+            sublime.status_message("Harpoon: save the file first")
+            return
+
+        marks = get_marks(self.window)
+        existing = get_mark_at(marks, index)
+
+        if existing is not None and existing["path"] == file_name:
+            set_mark_at(marks, index, None)
+            sublime.status_message(
+                "Harpoon: unmarked %s (slot %d)" % (os.path.basename(file_name), index)
+            )
+        else:
+            row, col = cursor_position(view)
+            set_mark_at(marks, index, {"path": file_name, "row": row, "col": col})
+            sublime.status_message(
+                "Harpoon: marked %s → slot %d" % (os.path.basename(file_name), index)
+            )
+
+        save_marks(self.window, marks)
+
+
 class HarpoonAddCommand(sublime_plugin.WindowCommand):
     """Add or remove the current file from this window's Harpoon list."""
 
@@ -126,16 +161,21 @@ class HarpoonAddCommand(sublime_plugin.WindowCommand):
             return
 
         marks = get_marks(self.window)
-        existing = find_mark(marks, file_name)
+        slot_index = find_mark_slot(marks, file_name)  # 0-based, or -1
 
-        if existing is not None:
-            marks.remove(existing)
+        if slot_index != -1:
+            set_mark_at(marks, slot_index + 1, None)
             sublime.status_message(
                 "Harpoon: unmarked %s" % os.path.basename(file_name)
             )
         else:
             row, col = cursor_position(view)
-            marks.append({"path": file_name, "row": row, "col": col})
+            mark = {"path": file_name, "row": row, "col": col}
+            free = find_free_slot(marks)
+            if free != -1:
+                set_mark_at(marks, free + 1, mark)
+            else:
+                marks.append(mark)
             sublime.status_message(
                 "Harpoon: marked %s" % os.path.basename(file_name)
             )
@@ -144,47 +184,63 @@ class HarpoonAddCommand(sublime_plugin.WindowCommand):
 
 
 class HarpoonListCommand(sublime_plugin.WindowCommand):
-    """Show quick panel of this window's harpooned files."""
+    """Show all slots in a quick panel; empty slots are visible but not navigable."""
 
     def run(self):
         marks = get_marks(self.window)
 
-        valid = [m for m in marks if os.path.isfile(m["path"])]
-        if valid != marks:
-            save_marks(self.window, valid)
-        marks = valid
+        # Prune deleted/moved files in place to preserve slot numbers.
+        changed = False
+        for i, m in enumerate(marks):
+            if m is not None and not os.path.isfile(m["path"]):
+                marks[i] = None
+                changed = True
+        if changed:
+            save_marks(self.window, marks)
 
-        if not marks:
+        if not any(m is not None for m in marks):
             sublime.status_message("Harpoon: no marks in this window")
             return
 
-        items = [[os.path.basename(m["path"]), m["path"]] for m in marks]
+        items = []
+        for i, m in enumerate(marks):
+            slot = i + 1
+            if m is None:
+                items.append(["slot %d — (empty)" % slot, ""])
+            else:
+                items.append(["slot %d — %s" % (slot, os.path.basename(m["path"])), m["path"]])
 
-        self.window.show_quick_panel(
-            items,
-            self.on_select,
-            sublime.MONOSPACE_FONT,
-        )
+        self.window.show_quick_panel(items, self.on_select, sublime.MONOSPACE_FONT)
         self._marks = marks
 
     def on_select(self, index):
         if index == -1:
             return
-        goto_mark(self.window, self._marks[index])
+        mark = self._marks[index]
+        if mark is None:
+            sublime.status_message("Harpoon: slot %d is empty" % (index + 1))
+            return
+        goto_mark(self.window, mark)
 
 
 class HarpoonGotoCommand(sublime_plugin.WindowCommand):
-    """Jump directly to mark N (1-indexed) in this window's list."""
+    """Jump directly to slot N (1-based) without compacting the sparse list."""
 
     def run(self, index):
         marks = get_marks(self.window)
-        marks = [m for m in marks if os.path.isfile(m["path"])]
+        mark = get_mark_at(marks, index)
 
-        if index < 1 or index > len(marks):
-            sublime.status_message("Harpoon: no mark at slot %d" % index)
+        if mark is None:
+            sublime.status_message("Harpoon: slot %d is empty" % index)
             return
 
-        goto_mark(self.window, marks[index - 1])
+        if not os.path.isfile(mark["path"]):
+            set_mark_at(marks, index, None)
+            save_marks(self.window, marks)
+            sublime.status_message("Harpoon: slot %d — file not found" % index)
+            return
+
+        goto_mark(self.window, mark)
 
 
 class HarpoonNextCommand(sublime_plugin.WindowCommand):
@@ -195,21 +251,22 @@ class HarpoonNextCommand(sublime_plugin.WindowCommand):
 
     def _cycle(self, direction):
         marks = get_marks(self.window)
-        marks = [m for m in marks if os.path.isfile(m["path"])]
-        if not marks:
+        # Build a navigation-only list — never mutate the sparse source list.
+        navigable = [m for m in marks if m is not None and os.path.isfile(m["path"])]
+        if not navigable:
             sublime.status_message("Harpoon: no marks in this window")
             return
 
         view = self.window.active_view()
         current = view.file_name() if view else None
-        paths = mark_paths(marks)
+        paths = mark_paths(navigable)
 
         if current in paths:
-            idx = (paths.index(current) + direction) % len(marks)
+            idx = (paths.index(current) + direction) % len(navigable)
         else:
             idx = 0
 
-        goto_mark(self.window, marks[idx])
+        goto_mark(self.window, navigable[idx])
 
 
 class HarpoonPrevCommand(HarpoonNextCommand):

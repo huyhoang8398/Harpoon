@@ -8,6 +8,31 @@
 		"command": "harpoon_add"
 	},
 	{
+		"caption": "Harpoon: Mark file to slot 1",
+		"command": "harpoon_add_to_slot",
+		"args": { "index": 1 }
+	},
+	{
+		"caption": "Harpoon: Mark file to slot 2",
+		"command": "harpoon_add_to_slot",
+		"args": { "index": 2 }
+	},
+	{
+		"caption": "Harpoon: Mark file to slot 3",
+		"command": "harpoon_add_to_slot",
+		"args": { "index": 3 }
+	},
+	{
+		"caption": "Harpoon: Mark file to slot 4",
+		"command": "harpoon_add_to_slot",
+		"args": { "index": 4 }
+	},
+	{
+		"caption": "Harpoon: Mark file to slot 5",
+		"command": "harpoon_add_to_slot",
+		"args": { "index": 5 }
+	},
+	{
 		"caption": "Harpoon: Show list",
 		"command": "harpoon_list"
 	},
