@@ -1,9 +1,5 @@
 [
 	{
-		"caption": "UndoTree: Show Undo Tree",
-		"command": "show_undo_tree"
-	},
-	{
 		"caption": "Harpoon: Add file",
 		"command": "harpoon_add"
 	},
