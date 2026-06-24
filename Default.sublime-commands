@@ -12,6 +12,10 @@
 		"command": "harpoon_list"
 	},
 	{
+		"caption": "Harpoon: Edit list",
+		"command": "harpoon_edit"
+	},
+	{
 		"caption": "Harpoon: Clear list",
 		"command": "harpoon_clear"
 	},

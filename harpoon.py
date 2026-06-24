@@ -32,9 +32,33 @@ def get_marks(window):
     return upgraded
 
 
+def find_editor_view(window):
+    for view in window.views():
+        if view.settings().get("harpoon_editor"):
+            return view
+    return None
+
+
 def save_marks(window, marks):
     """Persist marks into the window's session settings without touching disk."""
     window.settings().set(BOOKMARK_KEY, marks)
+    _sync_editor_tmp(window, marks)
+
+
+def _sync_editor_tmp(window, marks):
+    """If the editor view is open, keep its temp file in sync."""
+    editor = find_editor_view(window)
+    if editor is None:
+        return
+    tmp = editor.settings().get("harpoon_editor_tmp")
+    if not tmp:
+        return
+    content = "\n".join(m["path"] for m in marks)
+    try:
+        with open(tmp, "w", encoding="utf-8") as fh:
+            fh.write(content)
+    except OSError:
+        pass
 
 
 def mark_paths(marks):
@@ -75,12 +99,6 @@ def goto_mark(window, mark):
 
     _apply()
 
-
-def find_editor_view(window):
-    for view in window.views():
-        if view.settings().get("harpoon_editor"):
-            return view
-    return None
 
 
 def parse_marks(view, old_marks):
