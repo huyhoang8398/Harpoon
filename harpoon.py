@@ -52,7 +52,7 @@ def _sync_editor(window, marks):
         return
     if editor == window.active_view():
         return
-    content = "\n".join(m["path"] for m in marks)
+    content = "\n".join(rel_path(window, m["path"]) for m in marks)
     current = editor.substr(sublime.Region(0, editor.size()))
     if content == current:
         return
@@ -100,13 +100,34 @@ def goto_mark(window, mark):
     _apply()
 
 
-def parse_marks(view, old_marks):
+def rel_path(window, path):
+    """Return path relative to the project folder if under it, else absolute."""
+    folders = window.folders()
+    root = folders[0] if folders else None
+    if root:
+        try:
+            return os.path.relpath(path, root)
+        except ValueError:
+            pass  # Windows: different drives
+    return path
+
+
+def abs_path(window, path):
+    """Resolve a possibly-relative path back to absolute using the project folder."""
+    folders = window.folders()
+    root = folders[0] if folders else None
+    if root:
+        return os.path.normpath(os.path.join(root, path))
+    return os.path.normpath(path)
+
+
+def parse_marks(view, old_marks, window):
     content = view.substr(sublime.Region(0, view.size()))
     old_index = {m["path"]: m for m in old_marks}
     new_marks = []
     seen = set()
     for line in content.splitlines():
-        p = line.strip()
+        p = abs_path(window, line.strip())
         if not p or p in seen:
             continue
         seen.add(p)
@@ -161,7 +182,7 @@ class HarpoonEditorListener(sublime_plugin.EventListener):
         window = view.window()
         if window is None:
             return
-        save_marks(window, parse_marks(view, get_marks(window)))
+        save_marks(window, parse_marks(view, get_marks(window), window))
 
     def on_modified(self, view):
         if not self._is_editor(view):
@@ -256,7 +277,7 @@ class HarpoonEditCommand(sublime_plugin.WindowCommand):
         view.settings().set("harpoon_editor", True)
         view.settings().set("word_wrap", False)
 
-        content = "\n".join(m["path"] for m in get_marks(self.window))
+        content = "\n".join(rel_path(self.window, m["path"]) for m in get_marks(self.window))
         view.run_command("append", {"characters": content})
 
 
