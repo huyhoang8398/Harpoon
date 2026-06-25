@@ -1,5 +1,4 @@
 import os
-import tempfile
 import sublime
 import sublime_plugin
 
@@ -42,12 +41,12 @@ def find_editor_view(window):
 def save_marks(window, marks):
     """Persist marks into the window's session settings without touching disk."""
     window.settings().set(BOOKMARK_KEY, marks)
-    _sync_editor_tmp(window, marks)
+    _sync_editor(window, marks)
 
 
-def _sync_editor_tmp(window, marks):
-    """Sync the editor view buffer directly, but only when it is not the
-    active view, if the user is editing it we leave it alone"""
+def _sync_editor(window, marks):
+    """Update the editor buffer when marks change externally, but only if the
+    editor is not the active view, leave it alone while the user is editing"""
     editor = find_editor_view(window)
     if editor is None:
         return
@@ -57,7 +56,9 @@ def _sync_editor_tmp(window, marks):
     current = editor.substr(sublime.Region(0, editor.size()))
     if content == current:
         return
-    editor.run_command("harpoon_editor_replace", {"content": content})
+    editor.run_command("select_all")
+    editor.run_command("left_delete")
+    editor.run_command("append", {"characters": content})
 
 
 def mark_paths(marks):
@@ -99,7 +100,6 @@ def goto_mark(window, mark):
     _apply()
 
 
-
 def parse_marks(view, old_marks):
     content = view.substr(sublime.Region(0, view.size()))
     old_index = {m["path"]: m for m in old_marks}
@@ -112,12 +112,6 @@ def parse_marks(view, old_marks):
         seen.add(p)
         new_marks.append(old_index.get(p, {"path": p, "row": 0, "col": 0}))
     return new_marks
-
-
-class HarpoonEditorReplaceCommand(sublime_plugin.TextCommand):
-    """Replace the entire editor buffer content without affecting undo history."""
-    def run(self, edit, content):
-        self.view.replace(edit, sublime.Region(0, self.view.size()), content)
 
 
 class HarpoonTracker(sublime_plugin.EventListener):
@@ -182,14 +176,6 @@ class HarpoonEditorListener(sublime_plugin.EventListener):
             return
         self._commit(view)
 
-    def on_close(self, view):
-        tmp = view.settings().get("harpoon_editor_tmp")
-        if tmp and os.path.exists(tmp):
-            try:
-                os.unlink(tmp)
-            except OSError:
-                pass
-
 
 class HarpoonAddCommand(sublime_plugin.WindowCommand):
     """Add or remove the current file from this window's Harpoon list."""
@@ -253,8 +239,9 @@ class HarpoonListCommand(sublime_plugin.WindowCommand):
 
 
 class HarpoonEditCommand(sublime_plugin.WindowCommand):
-    """Open a temp file to edit the mark list, One path per line
-    Changes commit to memory on every modification. save, close (:w/:wq on Neovintageous)saves silently
+    """Open a scratch buffer to edit the mark list. One path per line.
+    Changes commit to memory on every modification (debounced 300ms).
+    Close the view to finalize. If already open, focuses it
     """
 
     def run(self):
@@ -263,19 +250,14 @@ class HarpoonEditCommand(sublime_plugin.WindowCommand):
             self.window.focus_view(existing)
             return
 
-        content = "\n".join(m["path"] for m in get_marks(self.window))
-
-        tmp = tempfile.NamedTemporaryFile(
-            mode="w", suffix=".harpoon", delete=False, encoding="utf-8"
-        )
-        tmp.write(content)
-        tmp.close()
-
-        view = self.window.open_file(tmp.name)
-        view.set_name("Harpoon — Edit Marks")
+        view = self.window.new_file()
+        view.set_name("Harpoon - Edit Marks")
+        view.set_scratch(True)
         view.settings().set("harpoon_editor", True)
-        view.settings().set("harpoon_editor_tmp", tmp.name)
         view.settings().set("word_wrap", False)
+
+        content = "\n".join(m["path"] for m in get_marks(self.window))
+        view.run_command("append", {"characters": content})
 
 
 class HarpoonGotoCommand(sublime_plugin.WindowCommand):
