@@ -8,6 +8,10 @@
         "command": "harpoon_list",
     },
     {
+        "keys": ["ctrl+alt+r"],
+        "command": "harpoon_edit",
+    },
+    {
         "keys": ["ctrl+alt+]"],
         "command": "harpoon_next",
     },
