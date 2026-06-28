@@ -1,5 +1,7 @@
 # Harpoon
 
+![Harpoon Spell Cards](./logo.png)
+
 A Sublime Text plugin for marking files and jumping back to them instantly.
 
 Marks are scoped **per project** / **per session**
