@@ -1,0 +1,16 @@
+=> 1.0.3
+
+# Features
+
+- Using window.settings() to store marks
+
+# Removed
+
+- No longer store file list to `.sublime-project`
+
+# Fix
+
+- Sidebar collapse everytime a new file was added or deleted
+see: https://github.com/sublimehq/sublime_text/issues/1892
+     https://github.com/sublimehq/sublime_text/issues/6731
+

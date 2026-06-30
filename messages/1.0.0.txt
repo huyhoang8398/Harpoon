@@ -1,0 +1,11 @@
+=> 1.0.0
+
+# Features
+
+- Mark/unmark the current file with a single command (harpoon_add)
+- Jump directly to a marked file by slot number (harpoon_goto)
+- Browse all marks in a quick panel (harpoon_list)
+- Cycle forward/backward through marks (harpoon_next / harpoon_prev)
+- Clear all marks for the current project (harpoon_clear)
+- Marks scoped per project, stored in .sublime-project via project_data()
+- Automatic pruning of dead marks pointing to deleted/moved files
