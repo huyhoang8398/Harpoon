@@ -1,0 +1,81 @@
+                  Thanks for trying out the Harpoon package!
+                  ======================================
+
+ABOUT
+-----
+Mark the files you're actively working on, jump between them instantly,
+and reorder your marks without ever leaving the keyboard.
+
+FEATURES
+--------
+- Mark/unmark files for quick access, stored per-project via window
+  settings
+- Quick-jump to any marked file by index or through a fuzzy quick panel
+- Built-in mark editor: opens a scratch buffer listing your marks as plain
+  text, edit/reorder/delete lines directly
+- Live position tracking: marks follow the file even as you keep editing,
+  so navigation stays accurate
+- Works out of the box, no external dependencies
+
+CONFIGURATION
+--------------
+Harpoon ships with sensible default keybindings, but you can customize
+everything via Package Settings > Harpoon > Key Bindings (User).
+
+Default commands you can rebind:
+
+| Command             | Description                                             |
+|---------------------|---------------------------------------------------------|
+| `harpoon_add`       | Mark the current file, or unmark it if already marked   |
+| `harpoon_list`      | Show a quick panel of all marks; select to open         |
+| `harpoon_goto`      | Jump to a specific mark by slot (`index` arg, 1-indexed)|
+| `harpoon_next`      | Cycle to the next mark                             		|
+| `harpoon_prev`      | Cycle to the previous mark                         		|
+| `harpoon_clear`     | Clear all marks for the current project            		|
+| `harpoon_edit`      | Open a buffer to edit/re-order harpoon list        		|
+
+Example keybinding (Example.sublime-keymap):
+[
+    { "keys": ["ctrl+alt+a"], "command": "harpoon_add" },
+    { "keys": ["ctrl+alt+e"], "command": "harpoon_list" },
+    { "keys": ["ctrl+alt+]"], "command": "harpoon_next" },
+    { "keys": ["ctrl+alt+["], "command": "harpoon_prev" },
+    { "keys": ["ctrl+alt+d"], "command": "harpoon_clear" },
+    { "keys": ["ctrl+alt+r"], "command": "harpoon_edit" },
+
+    { "keys": ["ctrl+1"], "command": "harpoon_goto", "args": {"index": 1} },
+    { "keys": ["ctrl+2"], "command": "harpoon_goto", "args": {"index": 2} },
+    { "keys": ["ctrl+3"], "command": "harpoon_goto", "args": {"index": 3} },
+    { "keys": ["ctrl+4"], "command": "harpoon_goto", "args": {"index": 4} }
+]
+
+
+USAGE
+-------------------------
+1. Open a file you want to keep close at hand.
+2. Press your `harpoon_add` key (e.g. `ctrl+alt+a`) to mark it or via command `Harpoon: Add file`. Press it again on the same file to unmark it.
+3. Switch to another file, mark it too. Repeat as needed.
+4. Use `ctrl+1`–`ctrl+4` (or your bound keys) to jump straight to a marked file by slot, `harpoon_next`/`harpoon_prev` to cycle through the list in order, or `harpoon_list` to see all marks in a quick panel and pick one
+5. Edit/Re-order your harpoon list with `harpoon_edit`, edit the file like a normal code file then save
+
+NEOVINTAGEOUS INTEGRATION
+-------------------------
+If you use NeoVintageous, Harpoon commands can be bound directly in your
+.neovintageousrc using PascalCase command names and key=value style
+arguments, e.g.:
+
+	" Harpoon
+	nnoremap ha :HarpoonAdd<CR>
+	nnoremap hm :HarpoonList<CR>
+	nnoremap hn :HarpoonNext<CR>
+	nnoremap hp :HarpoonPrev<CR>
+	nnoremap hc :HarpoonClear<CR>
+	nnoremap hh :HarpoonEdit<CR>
+
+SUPPORT
+-------
+Found a bug or have a feature request? Open an issue on the repository:
+https://github.com/huyhoang8398/Harpoon
+
+Enjoy faster navigation!
+Duy Huy Hoang DO

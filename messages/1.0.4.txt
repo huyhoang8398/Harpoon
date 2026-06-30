@@ -1,0 +1,9 @@
+=> 1.0.4
+
+# Features
+
+- Added editable scratch view for file management. File lists can now be edited directly in a temporary buffer, supporting adding, deleting, and reordering entries. Changes are synchronized with the in-memory state on modification, commit, and close events (including save-before-close), while external state changes automatically refresh the buffer to keep it in sync.
+- Added `harpoon_edit` command and keybind
+
+
+
