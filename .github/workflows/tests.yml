@@ -29,6 +29,6 @@ jobs:
 
       - name: Run headless ST tests
         run: |
-          /tmp/unittesting/docker/ut-run-tests "$GITHUB_WORKSPACE" \
+          bash /tmp/unittesting/docker/ut-run-tests "$GITHUB_WORKSPACE" \
             --refresh-cache \
             --cache-volume "unittesting-home-${{ github.sha }}"
