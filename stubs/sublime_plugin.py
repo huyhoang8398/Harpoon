@@ -3,10 +3,10 @@ class EventListener:
 
 # Window command
 class WindowCommand:
-	def __innit__(self, window=None):
+	def __innit__(self, window):
 		self.window = window
 
 
 class TextCommand:
-	def __init(self, view=None):
+	def __init(self, view):
 		self.view = view

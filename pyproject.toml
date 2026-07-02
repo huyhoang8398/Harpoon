@@ -18,3 +18,8 @@ pythonpath = ["stubs", "."]
 testpaths = ["tests"]
 python_files = ["test_harpoon_unit.py"]
 
+[tool.ty.environment]
+extra-paths = ["stubs"]
+
+[tool.ty.src]
+exclude = ["tests/test_harpoon.py"]
