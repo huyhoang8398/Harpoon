@@ -1,0 +1,34 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  fast-unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install deps
+        run: uv sync
+
+      - name: Run pytest
+        run: uv run pytest -v
+
+  st-headless-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Clone UnitTesting
+        run: git clone --depth 1 https://github.com/SublimeText/UnitTesting.git /tmp/unittesting
+
+      - name: Run headless ST tests
+        run: |
+          /tmp/unittesting/docker/ut-run-tests "$GITHUB_WORKSPACE" \
+            --refresh-cache \
+            --cache-volume "unittesting-home-${{ github.sha }}"
