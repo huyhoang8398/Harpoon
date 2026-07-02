@@ -7,3 +7,5 @@
 # other
 preview.*       export-ignore
 logo.* 			export-ignore
+
+uv.lock  		export-ignore
