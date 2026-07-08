@@ -14,16 +14,17 @@ Marks are scoped **per project** / **per session**
 - Jump to any mark directly by slot number (1, 2, 3, 4...)
 - Browse all marks in a quick panel
 - Cycle forward/backward through marks
-- Marks persist across restarts (saved in the `.sublime-project` file)
+- Marks persist across restarts
 - Dead marks (deleted or moved files) are pruned automatically
 - Modify list order easily with buffer
 
 ## Installation
 
-1. Open `Preferences > Browse Packages...` in Sublime Text.
-2. Create a new folder called `Harpoon`.
-3. Copy `Harpoon.py` into that folder.
-4. Add the key bindings below via `Preferences > Key Bindings`.
+### Stable Version
+Open the command palette and run `Package Control: Install Package`, then select `Harpoon`.
+
+### Development Version
+Clone this repository into your Packages directory.
 
 ## Recommend
 
